@@ -2,6 +2,8 @@ package com.example.pietrodimarco.hci;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PointF;
@@ -14,6 +16,9 @@ import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.util.ArraySet;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -24,10 +29,17 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arlib.floatingsearchview.FloatingSearchView;
+import com.example.pietrodimarco.hci.data.BaseItem;
+import com.example.pietrodimarco.hci.data.CustomDataProvider;
+import com.example.pietrodimarco.hci.data.GroupItem;
+import com.example.pietrodimarco.hci.data.Item;
+import com.example.pietrodimarco.hci.views.LevelBeamView;
 import com.google.gson.JsonElement;
 import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationListener;
@@ -52,8 +64,12 @@ import com.mapbox.services.commons.geojson.Feature;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import pl.openrnd.multilevellistview.ItemInfo;
+import pl.openrnd.multilevellistview.MultiLevelListAdapter;
 import pl.openrnd.multilevellistview.MultiLevelListView;
+import pl.openrnd.multilevellistview.OnItemClickListener;
 
 import static com.mapbox.mapboxsdk.style.layers.Property.NONE;
 import static com.mapbox.mapboxsdk.style.layers.Property.VISIBLE;
@@ -98,11 +114,15 @@ public class MainActivity extends AppCompatActivity
     private FloatingActionButton sheetbutton;
 
     private LinearLayout floorButtons;
+    public ListAdapter listAdapter;
+    public boolean deleteMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        addFavourite();
+        addRecent();
 
 
 
@@ -142,7 +162,6 @@ public class MainActivity extends AppCompatActivity
 
 
 
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         FloatingSearchView searchBar= findViewById(R.id.floating_search_view);
         searchBar.attachNavigationDrawerToMenuButton(drawer);
@@ -153,8 +172,7 @@ public class MainActivity extends AppCompatActivity
 
         final Button floor1Button = findViewById(R.id.floor1Button);
         final Button floor2Button = findViewById(R.id.floor2Button);
-        LinearLayout barLayour=findViewById(R.id.searchBar);
-        FloatingSearchView search=findViewById(R.id.floating_search_view);
+
 
 
         floor1Button.setOnClickListener(new View.OnClickListener() {
@@ -206,7 +224,92 @@ public class MainActivity extends AppCompatActivity
             public void onSlide(View bottomSheet, float slideOffset) {
             }
         });
+
+        confMenu();
     }
+
+
+    public void addRecent(){
+
+        Set<String>  recents = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            recents = new ArraySet<>();
+        }
+
+        recents.add("Room 2067");
+        recents.add("Room 1024");
+
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putStringSet("Recent",recents);
+        editor.commit();
+    }
+
+    public void addFavourite(){
+
+        Set<String>  favourites = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            favourites = new ArraySet<>();
+        }
+
+        favourites.add("Room 2014");
+        favourites.add("Room 2005");
+        favourites.add("Delete");
+
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putStringSet("Favourite",favourites);
+        editor.commit();
+    }
+
+
+    private void confMenu() {
+        multiLevelListView = (MultiLevelListView) findViewById(R.id.multiLevelMenu);
+
+        // custom ListAdapter
+        listAdapter = new ListAdapter(this);
+
+        multiLevelListView.setAdapter(listAdapter);
+        multiLevelListView.setOnItemClickListener(mOnItemClickListener);
+
+
+        listAdapter.setDataItems(CustomDataProvider.getInitialItems());
+    }
+
+
+    private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
+
+        private void showItemDescription(Object object, ItemInfo itemInfo) {
+            StringBuilder builder = new StringBuilder("\"");
+            String name = ((BaseItem) object).getName();
+            builder.append(name);
+            builder.append("\" clicked!\n");
+            builder.append(getItemInfoDsc(itemInfo));
+
+            Log.d("NOME",name);
+            if(name == "Restrooms") {
+                Intent intent = new Intent(MainActivity.this, ListViewAndroid.class);
+                startActivity(intent);
+            }
+
+            if(name == "Delete") {
+                deleteMode = !deleteMode;
+                Log.d("DIOO","pd");
+            }
+
+            Toast.makeText(MainActivity.this, builder.toString(), Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onItemClicked(MultiLevelListView parent, View view, Object item, ItemInfo itemInfo) {
+            showItemDescription(item, itemInfo);
+        }
+
+        @Override
+        public void onGroupItemClicked(MultiLevelListView parent, View view, Object item, ItemInfo itemInfo) {
+            showItemDescription(item, itemInfo);
+        }
+    };
 
     @Override
     public void onBackPressed() {
@@ -523,5 +626,149 @@ public class MainActivity extends AppCompatActivity
         mapboxMap.getLayer("FLOOR" + floor + "_walls").setProperties(visibility(vis));
         mapboxMap.getLayer("FLOOR" + floor + "_labels").setProperties(visibility(vis));
 
+    }
+
+    private String getItemInfoDsc(ItemInfo itemInfo) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(String.format("level[%d], idx in level[%d/%d]",
+                itemInfo.getLevel() + 1, /*Indexing starts from 0*/
+                itemInfo.getIdxInLevel() + 1 /*Indexing starts from 0*/,
+                itemInfo.getLevelSize()));
+
+        if (itemInfo.isExpandable()) {
+            builder.append(String.format(", expanded[%b]", itemInfo.isExpanded()));
+        }
+        return builder.toString();
+    }
+
+
+
+
+
+    private class ListAdapter extends MultiLevelListAdapter {
+
+        MainActivity main;
+
+        private class ViewHolder {
+            TextView nameView;
+            TextView infoView;
+            ImageView arrowView;
+            ImageView deleteView;
+            LevelBeamView levelBeamView;
+        }
+
+        public ListAdapter(MainActivity main){
+            this.main = main;
+        }
+
+        @Override
+        public List<?> getSubObjects(Object object) {
+
+            BaseItem baseItem = (BaseItem) object;
+            List<BaseItem> result = new ArrayList<>();
+
+            int level = ((GroupItem) baseItem).getLevel() + 1;
+            String menuItem = baseItem.getName();
+
+            if (!(baseItem instanceof GroupItem)) {
+                throw new IllegalArgumentException("GroupItem required");
+            }
+
+            GroupItem groupItem = (GroupItem)baseItem;
+            if(groupItem.getLevel() >= 2){
+                return null;
+            }
+
+            switch (level){
+                case 1 :
+                    switch (menuItem.toUpperCase()){
+                        case "FAVORITES" :
+                            result = getListFavourites();
+                            break;
+                        case "RECENT" :
+                            result = getListRecents();
+                            break;
+                    }
+                    break;
+
+            }
+
+            return result;
+        }
+
+        private List<BaseItem> getListFavourites(){
+
+            List<BaseItem> list = new ArrayList<>();
+
+            SharedPreferences sharedPref = main.getPreferences(Context.MODE_PRIVATE);
+            Set<String> returnValue = sharedPref.getStringSet("Favourite",null);
+
+            for (String s:
+                    returnValue) {
+                list.add(new Item(s));
+            }
+
+            return list;
+        }
+
+        private List<BaseItem> getListRecents(){
+
+            List<BaseItem> list = new ArrayList<>();
+
+            SharedPreferences sharedPref = main.getPreferences(Context.MODE_PRIVATE);
+            Set<String> returnValue = sharedPref.getStringSet("Recent",null);
+
+            for (String s:
+                    returnValue) {
+                list.add(new Item(s));
+            }
+
+            return list;
+        }
+
+        @Override
+        public boolean isExpandable(Object object) {
+            return CustomDataProvider.isExpandable((BaseItem) object);
+        }
+
+        @Override
+        public View getViewForObject(Object object, View convertView, ItemInfo itemInfo) {
+            ViewHolder viewHolder;
+
+            if (convertView == null) {
+                viewHolder = new ViewHolder();
+                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.data_item, null);
+                //viewHolder.infoView = (TextView) convertView.findViewById(R.id.dataItemInfo);
+                viewHolder.nameView = (TextView) convertView.findViewById(R.id.dataItemName);
+                viewHolder.arrowView = (ImageView) convertView.findViewById(R.id.dataItemArrow);
+                viewHolder.deleteView = (ImageView) convertView.findViewById(R.id.dataItemDelete);
+                viewHolder.levelBeamView = (LevelBeamView) convertView.findViewById(R.id.dataItemLevelBeam);
+                convertView.setTag(viewHolder);
+            } else {
+                viewHolder = (ViewHolder) convertView.getTag();
+            }
+
+            viewHolder.nameView.setText(((BaseItem) object).getName());
+            //viewHolder.infoView.setText(getItemInfoDsc(itemInfo));
+
+            if (itemInfo.isExpandable()) {
+                viewHolder.arrowView.setVisibility(View.VISIBLE);
+                viewHolder.deleteView.setVisibility(View.GONE);
+                viewHolder.arrowView.setImageResource(itemInfo.isExpanded() ?
+                        R.drawable.ic_expand_less : R.drawable.ic_expand_more);
+            } else {
+                viewHolder.arrowView.setVisibility(View.GONE);
+                viewHolder.deleteView.setVisibility(View.GONE);
+                if(deleteMode){
+                    viewHolder.deleteView.setVisibility(View.VISIBLE);
+                }
+                //////////////////////////////////////////////////////
+            }
+
+            viewHolder.levelBeamView.setLevel(itemInfo.getLevel());
+
+            return convertView;
+        }
     }
 }
