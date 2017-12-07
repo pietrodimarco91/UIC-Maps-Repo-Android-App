@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity
     private BottomSheetBehavior mBottomSheetBehavior1;
     private BottomSheetBehavior mBottomSheetBehaviorNav;
     private Button continueNavigationButton;
+    private Button terminateNavigationButton;
     FloatingSearchView mSearchView;
 
 
@@ -130,6 +131,8 @@ public class MainActivity extends AppCompatActivity
     private MultiLevelListView multiLevelListView;
     private int displayedFloor = 1 ;
     private boolean isLocating = false;
+
+    private Icon icon;
 
 
 
@@ -186,6 +189,18 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+
+        terminateNavigationButton = (Button) findViewById(R.id.terminateNavigationButton);
+        terminateNavigationButton.setVisibility(View.GONE);
+        terminateNavigationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                terminateNavigationButton.setVisibility(View.GONE);
+                leaveNavigationMode();
+            }
+        });
+
 
         FloatingActionButton locateButton = (FloatingActionButton) findViewById(R.id.locateButton);
         locateButton.setOnClickListener(new View.OnClickListener() {
@@ -274,11 +289,23 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        View navigationSheet = findViewById(R.id.sheet2);
+        mBottomSheetBehaviorNav = BottomSheetBehavior.from(navigationSheet);
+        mBottomSheetBehaviorNav.setHideable(true);
+        //mBottomSheetBehaviorNav.setPeekHeight(300);
+        mBottomSheetBehaviorNav.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+
         confMenu();
         //listAdapter.addFavourite("2068");
         //addRecent();
         //addFavourite("Room 2048");
+
+        IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
+        icon = iconFactory.fromResource(R.drawable.ic_arrow);
+
     }
+
 
     private void setupSearchBar() {
         mSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
@@ -849,6 +876,9 @@ public class MainActivity extends AppCompatActivity
         if (mShowIndoorLocation) {
             showLocationCircle(center, location.getAccuracy(), location.getBearing());
             currentFloor = location.getFloorLevel();
+            if(isInFollowMode){
+                displayFloor(location.getFloorLevel());
+            }
 
         }
 
@@ -907,18 +937,34 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private void showBottomSheet(String entry) {
+    private void showBottomSheet(final String entry) {
         View bottomSheet = findViewById(R.id.sheet1);
         TextView title = findViewById(R.id.bottomSheet_Title);
         title.setText("Room: " + entry );
-        ImageButton favButton = (ImageButton) findViewById(R.id.favButton);
+        final ImageButton favButton = (ImageButton) findViewById(R.id.favButton);
         favButton.setImageResource(R.drawable.ic_star_off);
         if(listAdapter.isInFavourites(entry)){
             favButton.setImageResource(R.drawable.ic_star_on);
         }
+        favButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(! listAdapter.isInFavourites(entry)){
+                    listAdapter.addFavourite(entry);
+                    Toast toast = Toast.makeText(getApplicationContext(), "Room " + entry + "added to the favorites", Toast.LENGTH_SHORT);
+                    toast.show();
+                    favButton.setImageResource(R.drawable.ic_star_on);
+                }else{
+                    listAdapter.delRoom(entry);
+                    Toast toast = Toast.makeText(getApplicationContext(), "Room " + entry + "removed from the favorites", Toast.LENGTH_SHORT);
+                    toast.show();
+                    favButton.setImageResource(R.drawable.ic_star_off);
+                }
+            }
+        });
         mBottomSheetBehavior1 = BottomSheetBehavior.from(bottomSheet);
-        if(mBottomSheetBehavior1.getState() != BottomSheetBehavior.STATE_COLLAPSED) {
-            mBottomSheetBehavior1.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        if(mBottomSheetBehavior1.getState() != BottomSheetBehavior.STATE_EXPANDED) {
+            mBottomSheetBehavior1.setState(BottomSheetBehavior.STATE_EXPANDED);
             sheetbutton.setVisibility(View.VISIBLE);
         }
     }
@@ -929,7 +975,7 @@ public class MainActivity extends AppCompatActivity
             int start = getStartingPoint(currentLocation, currentFloor);
             getWPAndDrawPath(start,room);
         }else{
-            Toast toast = Toast.makeText(getApplicationContext(), "Enable localization to show the path", Toast.LENGTH_LONG);
+            Toast toast = Toast.makeText(getApplicationContext(), "Enable localization to show the path", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
@@ -943,12 +989,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMapReady(MapboxMap mapboxMapready) {
         this.mapboxMap = mapboxMapready;
-        IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
-        Icon icon = iconFactory.fromResource(R.drawable.mapbox_mylocation_icon_bearing);
+
         marker = new MarkerViewOptions()
                 .position(new LatLng(41.869912, -87.647903))
                 .title("Location")
-                .snippet("Welcome to you")
+                .snippet("Your Location")
                 .icon(icon);
 
         mapboxMap.addMarker(marker);
@@ -1072,13 +1117,23 @@ public class MainActivity extends AppCompatActivity
             double cam = mapboxMap.getCameraPosition().bearing;
             markerBearing = bearing + (float) cam ;
         }
-        if(!marker.isVisible())
+       /* if(!marker.isVisible())
             marker.visible(true);
 
         marker.getMarker().getPosition().setLatitude(latLng.getLatitude());
         marker.getMarker().getPosition().setLongitude(latLng.getLongitude());
         marker.getMarker().setRotation(markerBearing);
-        //drawCircle(mapboxMap, latLng, Color.parseColor("#3bb2d0"),10);
+        //drawCircle(mapboxMap, latLng, Color.parseColor("#3bb2d0"),10);*/
+
+       mapboxMap.removeMarker(marker.getMarker());
+        marker = new MarkerViewOptions()
+                .position(latLng)
+                .rotation(markerBearing)
+                .title("Location")
+                .snippet("Your Location")
+                .icon(icon);
+
+        mapboxMap.addMarker(marker);
         if(isInFollowMode){
             CameraPosition position = new CameraPosition.Builder()
                     .target(latLng) // Sets the new camera position
@@ -1089,6 +1144,7 @@ public class MainActivity extends AppCompatActivity
             mapboxMap.animateCamera(CameraUpdateFactory
                     .newCameraPosition(position), 1000);
         }
+        mapboxMap.getMarkerViewManager().updateMarkerViewsPosition();
 
         currentBearing = bearing;
         currentLocation = latLng;
@@ -1220,7 +1276,37 @@ public class MainActivity extends AppCompatActivity
 
         mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position), 1000);
         isInFollowMode = true;
+
+        View navSheet = findViewById(R.id.sheet2);
+        mBottomSheetBehavior1.setState(BottomSheetBehavior.STATE_HIDDEN);
+        sheetbutton.setVisibility(View.GONE);
+        mBottomSheetBehaviorNav.setState(BottomSheetBehavior.STATE_EXPANDED);
+        terminateNavigationButton.setVisibility(View.VISIBLE);
+
+
     }
+
+    private void leaveNavigationMode() {
+        floorVisibility3D(1,NONE);
+        floorVisibility3D(2,NONE);
+        isInFollowMode = false;
+        isInNavigationMode = false;
+        displayFloor(currentFloor);
+
+        CameraPosition position = new CameraPosition.Builder()
+                .target(currentLocation) // Sets the new camera position
+                .zoom(17) // Sets the zoom
+                .bearing(currentBearing) // Rotate the camera
+                .tilt(0) // Set the camera tilt
+                .build(); // Creates a CameraPosition from the builder
+
+        mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position), 1000);
+        mBottomSheetBehaviorNav.setState(BottomSheetBehavior.STATE_HIDDEN);
+        continueNavigationButton.setVisibility(View.GONE);
+
+
+    }
+
 
     private String getItemInfoDsc(ItemInfo itemInfo) {
         StringBuilder builder = new StringBuilder();

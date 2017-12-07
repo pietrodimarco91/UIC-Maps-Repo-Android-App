@@ -6,21 +6,6 @@
     android:layout_height="match_parent"
     tools:context="com.example.pietrodimarco.hci.MainActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_anchor="@+id/include2"
-        app:layout_anchorGravity="left|center">
-
-        <Button
-            android:id="@+id/terminateNavigationButton"
-            android:layout_width="113dp"
-            android:layout_height="wrap_content"
-            android:text="Terminate"
-            android:textColor="@color/colorPrimary" />
-    </LinearLayout>
-
     <include
         android:id="@+id/include2"
         layout="@layout/content_main"
@@ -31,16 +16,45 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
         android:orientation="vertical"
-        app:layout_anchor="@+id/sheet1"
-        app:layout_anchorGravity="left|top">
+        android:visibility="visible"
+        app:layout_anchor="@+id/include2"
+        app:layout_anchorGravity="right|top">
 
-        <Button
-            android:id="@+id/continueNavigationButton"
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="Continue"
-            android:textColor="@color/colorPrimary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="30dp"
+        app:layout_anchor="@+id/sheet2"
+        app:layout_anchorGravity="top|center">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/continueNavigationButton"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Continue"
+                android:textColor="@color/colorPrimary" />
+
+            <Button
+                android:id="@+id/terminateNavigationButton"
+                android:layout_width="113dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Terminate"
+                android:textColor="@color/colorPrimary"
+                android:visibility="visible" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <LinearLayout
