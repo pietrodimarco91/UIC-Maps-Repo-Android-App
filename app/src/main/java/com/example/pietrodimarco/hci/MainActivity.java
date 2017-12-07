@@ -330,14 +330,14 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "onSuggestionClicked()");
 
                 mLastQuery = colorSuggestion.getBody();
-                showPath(DataHelper.findRoom(mLastQuery));
+                showPathFromSearch(DataHelper.findRoom(mLastQuery));
             }
 
             @Override
             public void onSearchAction(String query) {
                 mLastQuery = query;
 
-                showPath(DataHelper.findRoom(mLastQuery));
+                showPathFromSearch(DataHelper.findRoom(mLastQuery));
                 Log.d(TAG, "onSearchAction()");
             }
         });
@@ -405,7 +405,20 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    private void showPath(ResSearch room) {
+    private void showPathFromSearch(ResSearch room) {
+        showBottomSheet(room.getRoom());
+        showPathFromCurrentLocation(room.getRoom());
+
+        if (featureMarker != null) {
+            mapboxMap.removeMarker(featureMarker);
+        }
+        featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
+                .position(room.getLatLng())
+                .title("Room")
+                .snippet(room.getRoom())
+        );
+        featureMarkerFloor = displayedFloor;
+
     }
 
     @Override

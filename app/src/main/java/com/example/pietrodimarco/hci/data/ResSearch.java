@@ -18,4 +18,5 @@ public class ResSearch {
     public String getRoom() {
         return room;
     }
+    public LatLng getLatLng(){return latLng;}
 }
