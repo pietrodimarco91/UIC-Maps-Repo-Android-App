@@ -339,6 +339,7 @@ public class MainActivity extends AppCompatActivity
                 mSearchView.closeMenu(true);
                 InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                getCurrentFocus().clearFocus();
                 showPathFromSearch(room);
 
             }
