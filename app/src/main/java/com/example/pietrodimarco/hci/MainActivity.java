@@ -133,6 +133,8 @@ public class MainActivity extends AppCompatActivity
     private boolean isLocating = false;
 
     private Icon icon;
+    private TextView accuracyLabel;
+
 
 
 
@@ -222,6 +224,7 @@ public class MainActivity extends AppCompatActivity
         DataHelper.load(this);
         setupSearchBar();
 
+        accuracyLabel = findViewById(R.id.accuracyLabel);
 
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -291,7 +294,7 @@ public class MainActivity extends AppCompatActivity
 
         View navigationSheet = findViewById(R.id.sheet2);
         mBottomSheetBehaviorNav = BottomSheetBehavior.from(navigationSheet);
-        mBottomSheetBehaviorNav.setHideable(true);
+        mBottomSheetBehaviorNav.setHideable(false);
         //mBottomSheetBehaviorNav.setPeekHeight(300);
         mBottomSheetBehaviorNav.setState(BottomSheetBehavior.STATE_HIDDEN);
 
@@ -302,7 +305,7 @@ public class MainActivity extends AppCompatActivity
         //addFavourite("Room 2048");
 
         IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
-        icon = iconFactory.fromResource(R.drawable.ic_arrow);
+        icon = iconFactory.fromResource(R.drawable.mapbox_mylocation_icon_bearing);
 
     }
 
@@ -852,6 +855,7 @@ public class MainActivity extends AppCompatActivity
             showLocationCircle(
                     new LatLng(location.getLatitude(), location.getLongitude()),
                     location.getAccuracy(),location.getBearing() );
+            accuracyLabel.setText("Outdoor Accuracy: " + String.valueOf(location.getAccuracy()));
         }
 
 
@@ -879,6 +883,7 @@ public class MainActivity extends AppCompatActivity
             if(isInFollowMode){
                 displayFloor(location.getFloorLevel());
             }
+            accuracyLabel.setText("Indoor Accuracy: " + String.valueOf(location.getAccuracy()) + " (mt)\n Floor: " + String.valueOf(location.getFloorLevel()));
 
         }
 
@@ -967,6 +972,8 @@ public class MainActivity extends AppCompatActivity
             mBottomSheetBehavior1.setState(BottomSheetBehavior.STATE_EXPANDED);
             sheetbutton.setVisibility(View.VISIBLE);
         }
+        TextView navTitle = findViewById(R.id.navigatorTitle);
+        navTitle.setText("Navigate to: " + entry);
     }
 
 
@@ -1282,6 +1289,8 @@ public class MainActivity extends AppCompatActivity
         sheetbutton.setVisibility(View.GONE);
         mBottomSheetBehaviorNav.setState(BottomSheetBehavior.STATE_EXPANDED);
         terminateNavigationButton.setVisibility(View.VISIBLE);
+
+
 
 
     }
