@@ -24,10 +24,9 @@ public class CustomDataProvider {
 
 
 
-        rootMenu.add(new GroupItem("Favorites"));
-        rootMenu.add(new GroupItem("Recent"));
-        rootMenu.add(new Item("Restrooms"));
-        rootMenu.add(new Item("Settings"));
+        rootMenu.add(new GroupItem("Favourites"));
+        rootMenu.add(new GroupItem("Recents"));
+        rootMenu.add(new Item("Restrooms",false));
 
         return rootMenu;
     }
@@ -47,16 +46,14 @@ public class CustomDataProvider {
             return null;
         }
 
-        /*
-        * HANYA UNTUK GROUP-ITEM
-        * */
+
         switch (level){
             case LEVEL_1 :
                 switch (menuItem.toUpperCase()){
-                    case "FAVORITES" :
+                    case "FAVOURITES" :
                         result = getListFavourites();
                         break;
-                    case "RECENT" :
+                    case "RECENTS" :
                         result = getListRecents();
                         break;
                 }

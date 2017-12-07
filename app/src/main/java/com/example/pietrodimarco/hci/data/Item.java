@@ -7,4 +7,7 @@ public class Item extends BaseItem {
     public Item(String name) {
         super(name);
     }
+    public Item(String name, boolean isFavourite){
+        super(name,isFavourite);
+    }
 }
