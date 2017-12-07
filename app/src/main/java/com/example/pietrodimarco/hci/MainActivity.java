@@ -65,6 +65,7 @@ import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation;
 import com.mapbox.services.commons.geojson.Feature;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -244,7 +245,8 @@ public class MainActivity extends AppCompatActivity
         });
 
         confMenu();
-        //addFavourite("Room 1345");
+        //listAdapter.addFavourite("2068");
+        //addRecent();
         //addFavourite("Room 2048");
     }
 
@@ -283,8 +285,7 @@ public class MainActivity extends AppCompatActivity
             recents = new ArraySet<>();
         }
 
-        recents.add("Room 2067");
-        recents.add("Room 1024");
+        recents.add("2032");
 
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -416,19 +417,22 @@ public class MainActivity extends AppCompatActivity
         }
 
         public void addRecent(String room){
-
             SharedPreferences sharedPref = main.getPreferences(Context.MODE_PRIVATE);
             Set<String> returnValue = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                returnValue = sharedPref.getStringSet("Recent",null);
+                returnValue = sharedPref.getStringSet("Recent",new HashSet<String>());
             }
 
-            if(!returnValue.contains(room))
-                returnValue.add(room);
+            Set<String> values = new HashSet<String>(returnValue);
+
+            if(!values.contains(room))
+                values.add(room);
+
+
 
             SharedPreferences.Editor editor = sharedPref.edit();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                editor.putStringSet("Recent",returnValue);
+                editor.putStringSet("Recent",values);
             }
             editor.commit();
 
@@ -440,15 +444,19 @@ public class MainActivity extends AppCompatActivity
             SharedPreferences sharedPref = main.getPreferences(Context.MODE_PRIVATE);
             Set<String> returnValue = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                returnValue = sharedPref.getStringSet("Favourite",null);
+                returnValue = sharedPref.getStringSet("Favourite",new HashSet<String>());
             }
 
-            if(!returnValue.contains(room))
-                returnValue.add(room);
+            Set<String> values = new HashSet<String>(returnValue);
+
+            if(!values.contains(room))
+                values.add(room);
+
+
 
             SharedPreferences.Editor editor = sharedPref.edit();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                editor.putStringSet("Favourite",returnValue);
+                editor.putStringSet("Favourite",values);
             }
             editor.commit();
             setDataItems(CustomDataProvider.getInitialItems());
@@ -458,17 +466,32 @@ public class MainActivity extends AppCompatActivity
             SharedPreferences sharedPref = main.getPreferences(Context.MODE_PRIVATE);
             Set<String> returnValue = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                returnValue = sharedPref.getStringSet("Favourite",null);
+                returnValue = sharedPref.getStringSet("Favourite",new HashSet<String>());
             }
-            returnValue.remove(room);
+
+            Set<String> values = new HashSet<String>(returnValue);
+
+            values.remove(room);
+
 
             SharedPreferences.Editor editor = sharedPref.edit();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                editor.putStringSet("Favourite",returnValue);
+                editor.putStringSet("Favourite",values);
             }
             editor.commit();
             setDataItems(CustomDataProvider.getInitialItems());
             //listAdapter.notifyDataSetChanged();
+        }
+
+        public boolean isInFavourites(String room){
+            List<BaseItem> baseItems = getListFavourites();
+
+            for (BaseItem b:
+                 baseItems) {
+                if(b.getName().equals(room))
+                    return true;
+            }
+            return false;
         }
 
         private List<BaseItem> getListFavourites(){

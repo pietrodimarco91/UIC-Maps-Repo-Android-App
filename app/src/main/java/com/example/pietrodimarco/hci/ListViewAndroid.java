@@ -12,11 +12,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 
 public class ListViewAndroid extends Activity {
     ListView listView ;
+    List<Restroom> restrooms;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,13 +32,18 @@ public class ListViewAndroid extends Activity {
 
         addRestrooms();
 
+        RestroomManager rm = new RestroomManager(this);
+        rm.run();
+        restrooms = rm.getRestrooms();
+        List<String> stringsR = new ArrayList<>();
+        stringsR.add("Name\tGender\tAvailability");
+        for (Restroom r:
+             restrooms) {
+            stringsR.add(r.toString());
+        }
 
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        Set<String> returnValue = sharedPref.getStringSet("Favourite",null);
-
-        Log.d("SUCA", returnValue.toString());
-        String[] values = new String[returnValue.size()];
-        returnValue.toArray(values);
+        String[] values = new String[restrooms.size()];
+        restrooms.toArray(values);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, android.R.id.text1, values);
@@ -69,20 +77,6 @@ public class ListViewAndroid extends Activity {
 
     public void addRestrooms(){
 
-        Set<String>  favourites = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            favourites = new ArraySet<>();
-        }
-
-        favourites.add("Room 2067");
-        favourites.add("Room 1024");
-
-        Log.d("DIO", "PORCO");
-
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putStringSet("Favourite",favourites);
-        editor.commit();
     }
 
 }
