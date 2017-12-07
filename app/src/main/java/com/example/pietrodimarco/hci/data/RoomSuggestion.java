@@ -57,4 +57,8 @@ public class RoomSuggestion implements SearchSuggestion {
         dest.writeString(mColorName);
         dest.writeInt(mIsHistory ? 1 : 0);
     }
+
+    public String getRoom() {
+        return mColorName;
+    }
 }

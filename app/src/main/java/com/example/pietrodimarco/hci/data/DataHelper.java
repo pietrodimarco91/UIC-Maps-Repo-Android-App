@@ -44,8 +44,8 @@ import java.util.List;
 public class DataHelper {
 
     private static final String COLORS_FILE_NAME = "colors.json";
-    private static ArrayList<String> rooms = new ArrayList<>();
     private static ArrayList<ResSearch> resSearches= new ArrayList<>();
+    private static List<RoomSuggestion> history=new ArrayList<>();
 
 
     private static List<ColorWrapper> sColorWrappers = new ArrayList<>();
@@ -114,6 +114,13 @@ public class DataHelper {
         return null;
     }
 
+    public static void addHist(ResSearch room) {
+        for(int i=0;i<history.size();i++)
+            if(history.get(i).getRoom().equals(room.getRoom()))
+                return;
+        history.add(new RoomSuggestion(room.getRoom()));
+    }
+
     public interface OnFindColorsListener {
         void onResults(List<ColorWrapper> results);
     }
@@ -123,10 +130,7 @@ public class DataHelper {
     }
 
     public static List<RoomSuggestion> getHistory(int count) {
-        List<RoomSuggestion> rooms=new ArrayList<>();
-        rooms.add(new RoomSuggestion("234"));
-        rooms.add(new RoomSuggestion("54"));
-        return rooms;
+        return history;
     }
 
     public static void resetSuggestionsHistory() {
