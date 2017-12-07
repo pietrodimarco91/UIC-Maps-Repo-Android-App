@@ -45,12 +45,14 @@ import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationListener;
 import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IALocationRequest;
+import com.indooratlas.android.sdk.IARegion;
 import com.indooratlas.android.sdk.resources.IAResourceManager;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
+import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -93,6 +95,8 @@ public class MainActivity extends AppCompatActivity
     private Marker featureMarker;
     private int featureMarkerFloor = 0;
 
+    private boolean isInNavigationMode = false;
+
     private PolylineOptions path;
     private ArrayList<LatLng> floor1_points;
     private ArrayList<LatLng> floor2_points;
@@ -104,6 +108,7 @@ public class MainActivity extends AppCompatActivity
 
     private LatLng currentLocation = new LatLng(41.869912, -87.647903);
     private int currentFloor = 1;
+    private float currentBearing = 0;
 
     private MultiLevelListView multiLevelListView;
     private int displayedFloor = 1 ;
@@ -187,7 +192,14 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        FloatingActionButton navigateButton = (FloatingActionButton) findViewById(R.id.navigateButton);
+        navigateButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Code here executes on main thread after user presses button
+                enterNavigationMode();
 
+            }
+        });
 
 
 
@@ -226,6 +238,33 @@ public class MainActivity extends AppCompatActivity
         });
 
         confMenu();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mapView.onResume();
+
+        mIALocationManager.registerRegionListener(mRegionListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+        mIALocationManager.destroy();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mapView.onPause();
+        if (mIALocationManager != null) {
+            // unregister location & region changes
+            mIALocationManager.removeLocationUpdates(this);
+            mIALocationManager.registerRegionListener(mRegionListener);
+        }
+
     }
 
 
@@ -373,12 +412,21 @@ public class MainActivity extends AppCompatActivity
 
 
 
-
     @Override
     public void onLocationChanged(Location location) {
+        if(mapboxMap == null)
+            return;
+        if (!mShowIndoorLocation) {
+            Log.d(TAG, "new LocationService location received with coordinates: " + location.getLatitude()
+                    + "," + location.getLongitude());
+
+            showLocationCircle(
+                    new LatLng(location.getLatitude(), location.getLongitude()),
+                    location.getAccuracy(),location.getBearing() );
+        }
+
 
     }
-
     @Override
     public void onProviderEnabled(String provider) {
 
@@ -390,7 +438,28 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onLocationChanged(IALocation iaLocation) {
+    public void onLocationChanged(IALocation location) {
+
+        Log.d("myTag", "Location updated");
+
+        final LatLng center = new LatLng(location.getLatitude(), location.getLongitude());
+
+        if (mShowIndoorLocation) {
+            showLocationCircle(center, location.getAccuracy(), location.getBearing());
+            currentFloor = location.getFloorLevel();
+
+        }
+
+
+        /*IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
+        Icon icon = iconFactory.fromResource(R.drawable.mapbox_mylocation_icon_default);
+
+        MarkerViewOptions marker2 = new MarkerViewOptions()
+                .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                .title("Location")
+                .snippet(" ")
+                .icon(icon);
+        mapboxMap.addMarker(marker2);*/
 
     }
 
@@ -441,11 +510,8 @@ public class MainActivity extends AppCompatActivity
         mBottomSheetBehavior1 = BottomSheetBehavior.from(bottomSheet);
         if(mBottomSheetBehavior1.getState() != BottomSheetBehavior.STATE_COLLAPSED) {
             mBottomSheetBehavior1.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
             sheetbutton.setVisibility(View.VISIBLE);
-
         }
-
     }
 
 
@@ -453,7 +519,6 @@ public class MainActivity extends AppCompatActivity
         if(isLocating){
             int start = getStartingPoint(currentLocation, currentFloor);
             getWPAndDrawPath(start,room);
-
         }else{
             Toast toast = Toast.makeText(getApplicationContext(), "Enable localization to show the path", Toast.LENGTH_LONG);
             toast.show();
@@ -461,11 +526,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     public int getStartingPoint(LatLng latLng, int floor){
-
         WayFinder wayfinder = new WayFinder(getApplicationContext());
-
         return wayfinder.getStartingPoint(latLng, floor);
-
     }
 
 
@@ -480,14 +542,12 @@ public class MainActivity extends AppCompatActivity
                 .snippet("Welcome to you")
                 .icon(icon);
 
-
         mapboxMap.addMarker(marker);
         marker.getMarker().setVisible(isLocating);
         mapboxMap.setOnMapClickListener(this);
         displayFloor(1);
-
-        getWPAndDrawPath(1, "2068");
-
+        //getWPAndDrawPath(1, "2068");
+        mapboxMap.getUiSettings().setCompassMargins(10,200,10,0);
     }
 
 
@@ -518,18 +578,8 @@ public class MainActivity extends AppCompatActivity
                     .color(Color.parseColor("#3bb2d0"))
                     .width(5);
         }
-
-
-
         mapboxMap.addPolyline(path);
-
-
     }
-
-
-
-
-
 
 
 
@@ -555,6 +605,23 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+
+    private String TAG = "IA";
+
+    private IARegion.Listener mRegionListener = new IARegion.Listener() {
+        @Override
+        public void onEnterRegion(IARegion region) {
+            if (region.getType() == IARegion.TYPE_FLOOR_PLAN) {
+                final String newId = region.getId();
+                mShowIndoorLocation = true;
+            }
+        }
+        @Override
+        public void onExitRegion(IARegion region) {
+            mShowIndoorLocation = false;
+        }
+    };
+
     private void startListeningPlatformLocations() {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (locationManager != null) {
@@ -574,27 +641,104 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+
+    private void showLocationCircle(LatLng latLng, float accuracy, float bearing) {
+
+        float markerBearing;
+        if(isInNavigationMode){
+            markerBearing = 0;
+        }else{
+            markerBearing = bearing;
+        }
+        if(!marker.isVisible())
+            marker.visible(true);
+        marker.getMarker().getPosition().setLatitude(latLng.getLatitude());
+        marker.getMarker().getPosition().setLongitude(latLng.getLongitude());
+        marker.getMarker().setRotation(markerBearing);
+        //drawCircle(mapboxMap, latLng, Color.parseColor("#3bb2d0"),10);
+        if(isInNavigationMode){
+            CameraPosition position = new CameraPosition.Builder()
+                    .target(latLng) // Sets the new camera position
+                    .zoom(20) // Sets the zoom
+                    .bearing(markerBearing) // Rotate the camera
+                    .tilt(60) // Set the camera tilt
+                    .build(); // Creates a CameraPosition from the builder
+            mapboxMap.animateCamera(CameraUpdateFactory
+                    .newCameraPosition(position), 1000);
+        }
+
+        currentBearing = bearing;
+        currentLocation = latLng;
+
+    }
+
+    private PolygonOptions generatePerimeter(LatLng centerCoordinates, double radiusInKilometers, int numberOfSides) {
+        List<LatLng> positions = new ArrayList<>();
+        double distanceX = radiusInKilometers / (111.319 * Math.cos(centerCoordinates.getLatitude() * Math.PI / 180));
+        double distanceY = radiusInKilometers / 110.574;
+
+        double slice = (2 * Math.PI) / numberOfSides;
+
+        double theta;
+        double x;
+        double y;
+        LatLng position;
+        for (int i = 0; i < numberOfSides; ++i) {
+            theta = i * slice;
+            x = distanceX * Math.cos(theta);
+            y = distanceY * Math.sin(theta);
+
+            position = new LatLng(centerCoordinates.getLatitude() + y,
+                    centerCoordinates.getLongitude() + x);
+            positions.add(position);
+        }
+        return new PolygonOptions()
+                .addAll(positions)
+                .fillColor(Color.BLUE)
+                .alpha(0.4f);
+    }
+
+
+
+
     private void displayFloor(int floor){
+
         Button floor1Button = findViewById(R.id.floor1Button);
         Button floor2Button = findViewById(R.id.floor2Button);
         ArrayList<LatLng> points=null;
         if(floor == 1){
-            floorVisibility(1,VISIBLE);
-            floorVisibility(2,NONE);
+            if(isInNavigationMode){
+                floorVisibility(1, VISIBLE);
+                floorVisibility(2, NONE);
+                floorVisibility3D(1,VISIBLE);
+                floorVisibility3D(2,NONE);
+
+            }else {
+                floorVisibility(1, VISIBLE);
+                floorVisibility(2, NONE);
+            }
             floor1Button.setBackgroundColor(Color.GRAY);
             floor2Button.setBackgroundColor(Color.WHITE);
             displayedFloor = 1;
             points = floor1_points;
         }
         if (floor == 2){
-            floorVisibility(2,VISIBLE);
-            floorVisibility(1,NONE);
+            if(isInNavigationMode){
+                floorVisibility(1, NONE);
+                floorVisibility(2, VISIBLE);
+                floorVisibility3D(2,VISIBLE);
+                floorVisibility3D(1,NONE);
+
+            }else{
+                floorVisibility(2,VISIBLE);
+                floorVisibility(1,NONE);
+            }
             floor2Button.setBackgroundColor(Color.GRAY);
             floor1Button.setBackgroundColor(Color.WHITE);
             displayedFloor = 2;
             points = floor2_points;
         }
-        mapboxMap.removeAnnotations();
+
         if(isPathDisplayed){
             if (path!=null){
                 mapboxMap.removePolyline(path.getPolyline());
@@ -613,12 +757,14 @@ public class MainActivity extends AppCompatActivity
         }else{
             if (featureMarker != null) {
 
+                mapboxMap.removeMarker(featureMarker);
                 featureMarker = mapboxMap.addMarker(new MarkerViewOptions().position(featureMarker.getPosition()).title(featureMarker.getTitle()));
 
             }
         }
 
     }
+
     public void floorVisibility(int floor, String vis) {
 
 
@@ -626,6 +772,31 @@ public class MainActivity extends AppCompatActivity
         mapboxMap.getLayer("FLOOR" + floor + "_walls").setProperties(visibility(vis));
         mapboxMap.getLayer("FLOOR" + floor + "_labels").setProperties(visibility(vis));
 
+    }
+
+    public void floorVisibility3D(int floor, String vis) {
+
+
+        mapboxMap.getLayer("FLOOR" + floor + "_rooms_3D").setProperties(visibility(vis));
+        //mapboxMap.getLayer("FLOOR" + floor + "_walls_3D").setProperties(visibility(vis));
+        mapboxMap.getLayer("FLOOR" + floor + "_labels").setProperties(visibility(vis));
+
+    }
+
+
+    private void enterNavigationMode(){
+        isInNavigationMode = true;
+        displayFloor(displayedFloor);
+
+        CameraPosition position = new CameraPosition.Builder()
+                .target(currentLocation) // Sets the new camera position
+                .zoom(22) // Sets the zoom
+                .bearing(currentBearing) // Rotate the camera
+                .tilt(60) // Set the camera tilt
+                .build(); // Creates a CameraPosition from the builder
+
+        mapboxMap.animateCamera(CameraUpdateFactory
+                .newCameraPosition(position), 1000);
     }
 
     private String getItemInfoDsc(ItemInfo itemInfo) {
@@ -641,8 +812,6 @@ public class MainActivity extends AppCompatActivity
         }
         return builder.toString();
     }
-
-
 
 
 
