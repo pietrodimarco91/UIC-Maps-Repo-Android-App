@@ -16,6 +16,8 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.res.ResourcesCompat;
+import android.text.Html;
 import android.util.ArraySet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -34,10 +36,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arlib.floatingsearchview.FloatingSearchView;
+import com.arlib.floatingsearchview.suggestions.SearchSuggestionsAdapter;
+import com.arlib.floatingsearchview.suggestions.model.*;
+import com.arlib.floatingsearchview.util.Util;
 import com.example.pietrodimarco.hci.data.BaseItem;
+import com.example.pietrodimarco.hci.data.ColorSuggestion;
+import com.example.pietrodimarco.hci.data.ColorWrapper;
 import com.example.pietrodimarco.hci.data.CustomDataProvider;
+import com.example.pietrodimarco.hci.data.DataHelper;
 import com.example.pietrodimarco.hci.data.GroupItem;
 import com.example.pietrodimarco.hci.data.Item;
+import com.example.pietrodimarco.hci.data.ResSearch;
+import com.example.pietrodimarco.hci.data.RoomSuggestion;
 import com.example.pietrodimarco.hci.views.LevelBeamView;
 import com.google.gson.JsonElement;
 import com.indooratlas.android.sdk.IALocation;
@@ -84,6 +94,7 @@ public class MainActivity extends AppCompatActivity
 
     private BottomSheetBehavior mBottomSheetBehavior1;
     private Button continueNavigationButton;
+    FloatingSearchView mSearchView;
 
 
     private MapView mapView;
@@ -93,6 +104,7 @@ public class MainActivity extends AppCompatActivity
     private IAResourceManager mResourceManager;
     private MapboxMap mapboxMap;
     private boolean mShowIndoorLocation = false;
+    private String mLastQuery="";
 
     private Marker featureMarker;
     private int featureMarkerFloor = 0;
@@ -104,6 +116,7 @@ public class MainActivity extends AppCompatActivity
     private ArrayList<LatLng> floor1_points;
     private ArrayList<LatLng> floor2_points;
     private boolean isPathDisplayed = false;
+    public static final long FIND_SUGGESTION_SIMULATED_DELAY = 250;
 
 
 
@@ -188,15 +201,11 @@ public class MainActivity extends AppCompatActivity
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        FloatingSearchView mSearchView= findViewById(R.id.floating_search_view);
+        mSearchView= findViewById(R.id.floating_search_view);
         mSearchView.attachNavigationDrawerToMenuButton(drawer);
-        mSearchView.setOnMenuItemClickListener(new FloatingSearchView.OnMenuItemClickListener() {
-            @Override
-            public void onActionMenuItemSelected(MenuItem item) {
+        DataHelper.load(this);
+        setupSearchBar();
 
-            }
-
-        });
 
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -268,6 +277,134 @@ public class MainActivity extends AppCompatActivity
         //listAdapter.addFavourite("2068");
         //addRecent();
         //addFavourite("Room 2048");
+    }
+
+    private void setupSearchBar() {
+        mSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
+
+            @Override
+            public void onSearchTextChanged(String oldQuery, final String newQuery) {
+                if (!oldQuery.equals("") && newQuery.equals("")) {
+                    mSearchView.clearSuggestions();
+                } else {
+
+                    //this shows the top left circular progress
+                    //you can call it where ever you want, but
+                    //it makes sense to do it when loading something in
+                    //the background.
+                    mSearchView.showProgress();
+
+                    //simulates a query call to a data source
+                    //with a new query.
+                    DataHelper.findSuggestions(newQuery, 5,
+                            FIND_SUGGESTION_SIMULATED_DELAY, new DataHelper.OnFindSuggestionsListener() {
+
+                                @Override
+                                public void onResults(List<ColorSuggestion> results) {
+
+                                    //this will swap the data and
+                                    //render the collapse/expand animations as necessary
+                                    mSearchView.swapSuggestions(results);
+
+                                    //let the users know that the background
+                                    //process has completed
+                                    mSearchView.hideProgress();
+                                }
+                            });
+                }
+
+                Log.d(TAG, "onSearchTextChanged()");
+                Log.d("Barra", "setOnQueryChangeListener");
+
+
+            }
+        });
+
+        mSearchView.setOnSearchListener(new FloatingSearchView.OnSearchListener() {
+            @Override
+            public void onSuggestionClicked(final com.arlib.floatingsearchview.suggestions.model.SearchSuggestion searchSuggestion) {
+
+                RoomSuggestion colorSuggestion = (RoomSuggestion) searchSuggestion;
+
+                Log.d(TAG, "onSuggestionClicked()");
+
+                mLastQuery = colorSuggestion.getBody();
+                showPath(DataHelper.findRoom(mLastQuery));
+            }
+
+            @Override
+            public void onSearchAction(String query) {
+                mLastQuery = query;
+
+                showPath(DataHelper.findRoom(mLastQuery));
+                Log.d(TAG, "onSearchAction()");
+            }
+        });
+
+        mSearchView.setOnFocusChangeListener(new FloatingSearchView.OnFocusChangeListener() {
+            @Override
+            public void onFocus() {
+
+                //show suggestions when search bar gains focus (typically history suggestions)
+                mSearchView.swapSuggestions(DataHelper.getHistory(3));
+
+                Log.d(TAG, "onFocus()");
+            }
+
+            @Override
+            public void onFocusCleared() {
+
+                //set the title of the bar so that when focus is returned a new query begins
+                mSearchView.setSearchBarTitle(mLastQuery);
+
+                //you can also set setSearchText(...) to make keep the query there when not focused and when focus returns
+                //mSearchView.setSearchText(searchSuggestion.getBody());
+
+                Log.d(TAG, "onFocusCleared()");
+            }
+        });
+
+
+        //handle menu clicks the same way as you would
+        //in a regular activity
+        mSearchView.setOnMenuItemClickListener(new FloatingSearchView.OnMenuItemClickListener() {
+            @Override
+            public void onActionMenuItemSelected(MenuItem item) {
+
+
+            }
+        });
+
+        //use this listener to listen to menu clicks when app:floatingSearch_leftAction="showHome"
+        mSearchView.setOnHomeActionClickListener(new FloatingSearchView.OnHomeActionClickListener() {
+            @Override
+            public void onHomeClicked() {
+
+                Log.d(TAG, "onHomeClicked()");
+            }
+        });
+
+        /*
+         * Here you have access to the left icon and the text of a given suggestion
+         * item after as it is bound to the suggestion list. You can utilize this
+         * callback to change some properties of the left icon and the text. For example, you
+         * can load the left icon images using your favorite image loading library, or change text color.
+         *
+         *
+         * Important:
+         * Keep in mind that the suggestion list is a RecyclerView, so views are reused for different
+         * items in the list.
+         */
+        mSearchView.setOnBindSuggestionCallback(new SearchSuggestionsAdapter.OnBindSuggestionCallback() {
+            @Override
+            public void onBindSuggestion(View suggestionView, ImageView leftIcon,
+                                         TextView textView, com.arlib.floatingsearchview.suggestions.model.SearchSuggestion item, int itemPosition) {}
+
+
+        });
+    }
+
+    private void showPath(ResSearch room) {
     }
 
     @Override

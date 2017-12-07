@@ -36,14 +36,15 @@ public class ListViewAndroid extends Activity {
         rm.run();
         restrooms = rm.getRestrooms();
         List<String> stringsR = new ArrayList<>();
-        stringsR.add("Name\tGender\tAvailability");
+        stringsR.add("Restrooms list");
+        stringsR.add("Name     Gender     Availability");
         for (Restroom r:
              restrooms) {
             stringsR.add(r.toString());
         }
 
-        String[] values = new String[restrooms.size()];
-        restrooms.toArray(values);
+        String[] values = new String[stringsR.size()];
+        stringsR.toArray(values);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, android.R.id.text1, values);
