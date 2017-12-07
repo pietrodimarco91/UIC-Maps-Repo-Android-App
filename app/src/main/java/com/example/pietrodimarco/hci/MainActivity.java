@@ -168,8 +168,15 @@ public class MainActivity extends AppCompatActivity
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        FloatingSearchView searchBar= findViewById(R.id.floating_search_view);
-        searchBar.attachNavigationDrawerToMenuButton(drawer);
+        FloatingSearchView mSearchView= findViewById(R.id.floating_search_view);
+        mSearchView.attachNavigationDrawerToMenuButton(drawer);
+        mSearchView.setOnMenuItemClickListener(new FloatingSearchView.OnMenuItemClickListener() {
+            @Override
+            public void onActionMenuItemSelected(MenuItem item) {
+
+            }
+
+        });
 
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
