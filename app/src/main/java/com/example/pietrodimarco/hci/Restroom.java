@@ -45,6 +45,6 @@ public class Restroom {
             avail = new String("Medium");
         else if (availability==2)
             avail = new String("High");
-        return this.room + "\t" + this.gender + "\t" + avail;
+        return this.room + "     " + this.gender + "     " + avail;
     }
 }

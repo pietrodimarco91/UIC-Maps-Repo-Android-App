@@ -30,7 +30,7 @@ public class RestroomManager implements Runnable{
         String bathroom;
         LoadJson string=new LoadJson();
         try {
-            FeatureCollection geoJSON = (FeatureCollection) GeoJSON.parse(string.loadJSONFromAsset(appContext));
+            FeatureCollection geoJSON = (FeatureCollection) GeoJSON.parse(string.loadJSONFromAssetB(appContext));
             for (int i = 0; i < geoJSON.getFeatures().size(); i++) {
                 if(geoJSON.getFeatures().get(i).getProperties().isNull("room"))
                     bathroom="";
