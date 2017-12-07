@@ -96,6 +96,17 @@ public class DataHelper {
 
     }
 
+    public static LatLng getLatLng(String room) {
+
+        for(int i=0;i<resSearches.size();i++)
+            if(resSearches.get(i).room.equals(room))
+                return resSearches.get(i).latLng;
+        return null;
+
+
+
+    }
+
     public static ResSearch findRoom(String query) {
         for (int i=0;i<resSearches.size();i++)
             if(resSearches.get(i).getRoom().equals(query))
