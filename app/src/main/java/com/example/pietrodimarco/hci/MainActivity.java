@@ -93,6 +93,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private BottomSheetBehavior mBottomSheetBehavior1;
+    private BottomSheetBehavior mBottomSheetBehaviorNav;
     private Button continueNavigationButton;
     FloatingSearchView mSearchView;
 
@@ -240,7 +241,7 @@ public class MainActivity extends AppCompatActivity
 
 
 
-        View bottomSheet = findViewById(R.id.sheet2);
+        View bottomSheet = findViewById(R.id.sheet1);
         mBottomSheetBehavior1 = BottomSheetBehavior.from(bottomSheet);
         mBottomSheetBehavior1.setHideable(true);
         mBottomSheetBehavior1.setPeekHeight(300);
@@ -894,7 +895,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void showBottomSheet(String entry) {
-        View bottomSheet = findViewById(R.id.sheet2);
+        View bottomSheet = findViewById(R.id.sheet1);
         TextView title = findViewById(R.id.bottomSheet_Title);
         title.setText("Room: " + entry );
         ImageButton favButton = (ImageButton) findViewById(R.id.favButton);
