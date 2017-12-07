@@ -84,6 +84,8 @@ public class MainActivity extends AppCompatActivity
 
 
     private BottomSheetBehavior mBottomSheetBehavior1;
+    private Button continueNavigationButton;
+
 
     private MapView mapView;
     private final int CODE_PERMISSIONS = 1;
@@ -153,6 +155,24 @@ public class MainActivity extends AppCompatActivity
 
         MapboxNavigation navigation = new MapboxNavigation(this, "pk.eyJ1IjoiZ3JvdXAzaGNpIiwiYSI6ImNqOXhkZTU0MDB0bnAzM3Bva2JyY2M2Mm8ifQ.wimKY4mWCu4Pr8SIOlR_Qg");
 
+
+        continueNavigationButton = (Button) findViewById(R.id.continueNavigationButton);
+        continueNavigationButton.setVisibility(View.GONE);
+        continueNavigationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isInFollowMode = true;
+                CameraPosition position = new CameraPosition.Builder()
+                        .target(currentLocation) // Sets the new camera position
+                        .zoom(20) // Sets the zoom
+                        .bearing(currentBearing) // Rotate the camera
+                        .tilt(60) // Set the camera tilt
+                        .build(); // Creates a CameraPosition from the builder
+                mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position), 1000);
+                continueNavigationButton.setVisibility(View.GONE);
+
+            }
+        });
 
         FloatingActionButton locateButton = (FloatingActionButton) findViewById(R.id.locateButton);
         locateButton.setOnClickListener(new View.OnClickListener() {
@@ -742,8 +762,8 @@ public class MainActivity extends AppCompatActivity
 
 
     @Override
-    public void onMapReady(MapboxMap mapboxMap) {
-        this.mapboxMap = mapboxMap;
+    public void onMapReady(MapboxMap mapboxMapready) {
+        this.mapboxMap = mapboxMapready;
         IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
         Icon icon = iconFactory.fromResource(R.drawable.mapbox_mylocation_icon_bearing);
         marker = new MarkerViewOptions()
@@ -762,7 +782,12 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onCameraMoveStarted(int reason) {
                 if (reason == REASON_API_GESTURE){
-                    Log.d("movestartted", "onCameraMoveStarted: gesture ");
+                    if(isInFollowMode){
+                        isInFollowMode = false;
+                        continueNavigationButton.setVisibility(View.VISIBLE);
+
+
+                    }
                 }
             }
         });
@@ -866,10 +891,13 @@ public class MainActivity extends AppCompatActivity
         if(isInNavigationMode){
             markerBearing = 0;
         }else{
-            markerBearing = bearing;
+
+            double cam = mapboxMap.getCameraPosition().bearing;
+            markerBearing = bearing + (float) cam ;
         }
         if(!marker.isVisible())
             marker.visible(true);
+
         marker.getMarker().getPosition().setLatitude(latLng.getLatitude());
         marker.getMarker().getPosition().setLongitude(latLng.getLongitude());
         marker.getMarker().setRotation(markerBearing);
@@ -1013,8 +1041,7 @@ public class MainActivity extends AppCompatActivity
                 .tilt(60) // Set the camera tilt
                 .build(); // Creates a CameraPosition from the builder
 
-        mapboxMap.animateCamera(CameraUpdateFactory
-                .newCameraPosition(position), 1000);
+        mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position), 1000);
         isInFollowMode = true;
     }
 

@@ -1,0 +1,69 @@
+{
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "floor": 1,
+        "gender": "male",
+        "room": "BM1"
+      },
+      "geometry": {
+        "coordinates": [
+          -87.647894,
+          41.870079
+        ],
+        "type": "Point"
+      },
+      "id": "19197ceb59905451e994a04dff3189ee"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "floor": 2,
+        "gender": "male",
+        "room": "BM2"
+      },
+      "geometry": {
+        "coordinates": [
+          -87.647891,
+          41.870079
+        ],
+        "type": "Point"
+      },
+      "id": "400a946d3e3a2b366473fbc909757613"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "floor": 2,
+        "gender": "female",
+        "room": "BF2"
+      },
+      "geometry": {
+        "coordinates": [
+          -87.647892,
+          41.870125
+        ],
+        "type": "Point"
+      },
+      "id": "d780d1ccc0ae059372b0e4bce49d3011"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "floor": 1,
+        "gender": "female",
+        "room": "BF1"
+      },
+      "geometry": {
+        "coordinates": [
+          -87.647895,
+          41.870125
+        ],
+        "type": "Point"
+      },
+      "id": "e93fcb541a6a1ed2f270c8260c60c286"
+    }
+  ],
+  "type": "FeatureCollection"
+}
