@@ -332,7 +332,6 @@ public class MainActivity extends AppCompatActivity
 
                 mLastQuery = colorSuggestion.getBody();
                 showPath(DataHelper.findRoom(mLastQuery));
-                mSearchView.openMenu(true);
             }
 
             @Override
