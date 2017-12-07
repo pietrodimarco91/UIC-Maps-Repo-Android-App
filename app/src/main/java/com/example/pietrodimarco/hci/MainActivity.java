@@ -28,6 +28,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -357,17 +358,28 @@ public class MainActivity extends AppCompatActivity
 
                 RoomSuggestion colorSuggestion = (RoomSuggestion) searchSuggestion;
 
-                Log.d(TAG, "onSuggestionClicked()");
+                Log.d(TAG, "onSuggestionClicked()"+colorSuggestion.getBody());
 
-                mLastQuery = colorSuggestion.getBody();
-                showPathFromSearch(DataHelper.findRoom(mLastQuery));
+                mLastQuery = colorSuggestion.getRoom();
+
+                ResSearch room=DataHelper.findRoom(mLastQuery);
+                DataHelper.addHist(room);
+                mSearchView.clearSuggestions();
+                mSearchView.setSearchBarTitle(mLastQuery);
+                mSearchView.closeMenu(true);
+                InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                getCurrentFocus().clearFocus();
+                showPathFromSearch(room);
+
             }
 
             @Override
             public void onSearchAction(String query) {
                 mLastQuery = query;
-
-                showPathFromSearch(DataHelper.findRoom(mLastQuery));
+                ResSearch room=DataHelper.findRoom(mLastQuery);
+                DataHelper.addHist(room);
+                showPathFromSearch(room);
                 Log.d(TAG, "onSearchAction()");
             }
         });
