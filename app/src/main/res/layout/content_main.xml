@@ -19,7 +19,7 @@
             app:mapbox_cameraTargetLat="41.869817"
             app:mapbox_cameraTargetLng="-87.647870"
             app:mapbox_cameraZoom="18"
-            app:mapbox_styleUrl="mapbox://styles/group3hci/cj9xdf9746ktj2rry7msiunw3" />
+            app:mapbox_styleUrl="mapbox://styles/group3hci/cjavt3ky1mcbg2rn0vkmpupos" />
 
     </RelativeLayout>
 

@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity
     private int featureMarkerFloor = 0;
 
     private boolean isInNavigationMode = false;
+    private boolean isInFollowMode = false;
 
     private PolylineOptions path;
     private ArrayList<LatLng> floor1_points;
@@ -113,6 +114,7 @@ public class MainActivity extends AppCompatActivity
     private MultiLevelListView multiLevelListView;
     private int displayedFloor = 1 ;
     private boolean isLocating = false;
+
 
 
 
@@ -656,11 +658,11 @@ public class MainActivity extends AppCompatActivity
         marker.getMarker().getPosition().setLongitude(latLng.getLongitude());
         marker.getMarker().setRotation(markerBearing);
         //drawCircle(mapboxMap, latLng, Color.parseColor("#3bb2d0"),10);
-        if(isInNavigationMode){
+        if(isInFollowMode){
             CameraPosition position = new CameraPosition.Builder()
                     .target(latLng) // Sets the new camera position
                     .zoom(20) // Sets the zoom
-                    .bearing(markerBearing) // Rotate the camera
+                    .bearing(bearing) // Rotate the camera
                     .tilt(60) // Set the camera tilt
                     .build(); // Creates a CameraPosition from the builder
             mapboxMap.animateCamera(CameraUpdateFactory
@@ -797,6 +799,7 @@ public class MainActivity extends AppCompatActivity
 
         mapboxMap.animateCamera(CameraUpdateFactory
                 .newCameraPosition(position), 1000);
+        isInFollowMode = true;
     }
 
     private String getItemInfoDsc(ItemInfo itemInfo) {
