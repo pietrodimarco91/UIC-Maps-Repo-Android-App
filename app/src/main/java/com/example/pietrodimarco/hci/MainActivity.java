@@ -550,6 +550,14 @@ public class MainActivity extends AppCompatActivity
         displayFloor(1);
         //getWPAndDrawPath(1, "2068");
         mapboxMap.getUiSettings().setCompassMargins(10,200,10,0);
+        mapboxMap.addOnCameraMoveStartedListener(new MapboxMap.OnCameraMoveStartedListener() {
+            @Override
+            public void onCameraMoveStarted(int reason) {
+                if (reason == REASON_API_GESTURE){
+                    Log.d("movestartted", "onCameraMoveStarted: gesture ");
+                }
+            }
+        });
     }
 
 
