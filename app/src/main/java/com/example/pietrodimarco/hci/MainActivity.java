@@ -28,6 +28,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -336,6 +337,8 @@ public class MainActivity extends AppCompatActivity
                 mSearchView.clearSuggestions();
                 mSearchView.setSearchBarTitle(mLastQuery);
                 mSearchView.closeMenu(true);
+                InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
                 showPathFromSearch(room);
 
             }
