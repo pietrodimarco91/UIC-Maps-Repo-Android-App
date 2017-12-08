@@ -20,6 +20,9 @@ import java.util.Set;
 public class ListViewAndroid extends Activity {
     ListView listView ;
     List<Restroom> restrooms;
+   
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +73,7 @@ public class ListViewAndroid extends Activity {
                 Toast.makeText(getApplicationContext(),
                         "Position :"+itemPosition+"  ListItem : " +itemValue , Toast.LENGTH_LONG)
                         .show();
+
 
             }
 

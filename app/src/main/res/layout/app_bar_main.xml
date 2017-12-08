@@ -204,7 +204,15 @@
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
-
+            <TextView
+                android:id="@+id/message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingLeft="16dp"
+                android:text="Follow the path"
+                android:textColor="@color/background"
+                android:textColorLink="@color/background" />
 
 
         </LinearLayout>
@@ -225,7 +233,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="75dp"
         android:orientation="vertical">
 
         <TextView
@@ -233,7 +241,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/cardview_shadow_start_color"
-            android:textColor="@color/dark_gray"
+            android:padding="10dp"
+            android:textColor="@android:color/background_light"
             android:textColorLink="@color/dark_gray"
             android:textSize="16sp" />
     </LinearLayout>

@@ -75,6 +75,7 @@ import com.mapbox.services.commons.geojson.Feature;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -166,7 +167,6 @@ public class MainActivity extends AppCompatActivity
         mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
-
 
         mIALocationManager = IALocationManager.create(this);
         mResourceManager = IAResourceManager.create(this);
@@ -295,7 +295,7 @@ public class MainActivity extends AppCompatActivity
 
         View navigationSheet = findViewById(R.id.sheet2);
         mBottomSheetBehaviorNav = BottomSheetBehavior.from(navigationSheet);
-        mBottomSheetBehaviorNav.setHideable(false);
+        mBottomSheetBehaviorNav.setHideable(true);
         //mBottomSheetBehaviorNav.setPeekHeight(300);
         mBottomSheetBehaviorNav.setState(BottomSheetBehavior.STATE_HIDDEN);
 
@@ -491,19 +491,20 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    public void addRecent(){
+    public void addRecent(String recent){
 
         Set<String>  recents = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             recents = new ArraySet<>();
         }
 
-        recents.add("2032");
+        recents.add(recent);
 
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putStringSet("Recent",recents);
         editor.commit();
+        listAdapter.setDataItems(CustomDataProvider.getInitialItems());
     }
 
     public void addFavourite(){
@@ -542,29 +543,29 @@ public class MainActivity extends AppCompatActivity
     private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
 
         private void showItemDescription(Object object, ItemInfo itemInfo) {
-            StringBuilder builder = new StringBuilder("\"");
+            //StringBuilder builder = new StringBuilder("\"");
             String name = ((BaseItem) object).getName();
-            builder.append(name);
-            builder.append("\" clicked!\n");
-            builder.append(getItemInfoDsc(itemInfo));
+            //builder.append(name);
+            //builder.append("\" clicked!\n");
+            //builder.append(getItemInfoDsc(itemInfo));
 
+            BaseItem base = (BaseItem) object;
+            
             if(name.equals("Restrooms")) {
                 Intent intent = new Intent(MainActivity.this, ListViewAndroid.class);
                 startActivity(intent);
-            }
-
-            if(name.equals("Delete")) {
+            }else if(name.equals("Delete")) {
                 deleteMode = !deleteMode;
                 //addFavourite();
                 listAdapter.notifyDataSetChanged();
-            }
-
-            if(deleteMode && ((BaseItem) object).isFavourite() && !name.equals("Delete")){
+            }else if(deleteMode && ((BaseItem) object).isFavourite() ){
                 //delete Room
                 listAdapter.delRoom(name);
+            }else if(!name.equals("Recents") && !name.equals("Favourites")){
+                showPathFromMenu(name);
             }
 
-            Toast.makeText(MainActivity.this, builder.toString(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(MainActivity.this, builder.toString(), Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -577,6 +578,27 @@ public class MainActivity extends AppCompatActivity
             showItemDescription(item, itemInfo);
         }
     };
+
+    public void showPathFromMenu(String name) {
+
+
+
+
+            showBottomSheet(name);
+            showPathFromCurrentLocation(name);
+
+            LatLng point  = DataHelper.getLatLng(name);
+            if (featureMarker != null) {
+                mapboxMap.removeMarker(featureMarker);
+            }
+            featureMarker = mapboxMap.addMarker(new MarkerViewOptions()
+                    .position(point)
+                    .title("Room")
+                    .snippet(name)
+            );
+            featureMarkerFloor = displayedFloor;
+
+    }
 
     private class ListAdapter extends MultiLevelListAdapter {
 
@@ -986,6 +1008,7 @@ public class MainActivity extends AppCompatActivity
         }
         TextView navTitle = findViewById(R.id.navigatorTitle);
         navTitle.setText("Navigate to: " + entry);
+        listAdapter.addRecent(entry);
     }
 
 
